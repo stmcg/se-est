@@ -113,6 +113,7 @@ run_sims_malevel <- function(batches, batchsize, seeds, nboot){
     scenario <- sim_scenarios_ma[m, 'scenario']
     prop_medians <- sim_scenarios_ma[m, 'prop_medians']
     tausq <- sim_scenarios_ma[m, 'tausq']
+    random_effect <- tausq > 0
     
     temp <- foreach (t = 1:n_batches) %dopar%{
       set.seed(seeds_batch[batches[t]])
@@ -160,12 +161,17 @@ run_sims_malevel <- function(batches, batchsize, seeds, nboot){
           } 
         }
         
-        fit_qe_naive <- rma.uni_robust(yi = yi_qe, vi = vi_qe_naive, method = 'REML')
-        fit_qe_boot <- rma.uni_robust(yi = yi_qe, vi = vi_qe_boot, method = 'REML')
-        fit_bc_naive <- rma.uni_robust(yi = yi_bc, vi = vi_bc_naive, method = 'REML')
-        fit_bc_boot <- rma.uni_robust(yi = yi_bc, vi = vi_bc_boot, method = 'REML')
-        fit_mln_naive <- rma.uni_robust(yi = yi_mln, vi = vi_mln_naive, method = 'REML')
-        fit_mln_boot <- rma.uni_robust(yi = yi_mln, vi = vi_mln_boot, method = 'REML')
+        if (random_effect){
+          method <- 'REML'
+        } else {
+          method <- 'FE'
+        }
+        fit_qe_naive <- rma.uni_robust(yi = yi_qe, vi = vi_qe_naive, method = method)
+        fit_qe_boot <- rma.uni_robust(yi = yi_qe, vi = vi_qe_boot, method = method)
+        fit_bc_naive <- rma.uni_robust(yi = yi_bc, vi = vi_bc_naive, method = method)
+        fit_bc_boot <- rma.uni_robust(yi = yi_bc, vi = vi_bc_boot, method = method)
+        fit_mln_naive <- rma.uni_robust(yi = yi_mln, vi = vi_mln_naive, method = method)
+        fit_mln_boot <- rma.uni_robust(yi = yi_mln, vi = vi_mln_boot, method = method)
         
         mycol <- c('pooled_mean_est', 'pooled_mean_ci_lb', 'pooled_mean_ci_ub')
         res_qe_naive[i, mycol] <- extract_pooled_mean(fit_qe_naive)
@@ -176,19 +182,27 @@ run_sims_malevel <- function(batches, batchsize, seeds, nboot){
         res_mln_boot[i, mycol] <- extract_pooled_mean(fit_mln_boot)
         
         mycol <- c('tausq_est', 'tausq_ci_lb', 'tausq_ci_ub')
-        res_qe_naive[i, mycol] <- extract_tausq(fit_qe_naive)
-        res_qe_boot[i, mycol] <- extract_tausq(fit_qe_boot)
-        res_bc_naive[i, mycol] <- extract_tausq(fit_bc_naive)
-        res_bc_boot[i, mycol] <- extract_tausq(fit_bc_boot)
-        res_mln_naive[i, mycol] <- extract_tausq(fit_mln_naive)
-        res_mln_boot[i, mycol] <- extract_tausq(fit_mln_boot)
-        
-        res_qe_naive[i, 'I2'] <- fit_qe_naive$I2
-        res_qe_boot[i, 'I2'] <- fit_qe_boot$I2
-        res_bc_naive[i, 'I2'] <- fit_bc_naive$I2
-        res_bc_boot[i, 'I2'] <- fit_bc_boot$I2
-        res_mln_naive[i, 'I2'] <- fit_mln_naive$I2
-        res_mln_boot[i, 'I2'] <- fit_mln_boot$I2
+        if (random_effect){
+          res_qe_naive[i, mycol] <- extract_tausq(fit_qe_naive)
+          res_qe_boot[i, mycol] <- extract_tausq(fit_qe_boot)
+          res_bc_naive[i, mycol] <- extract_tausq(fit_bc_naive)
+          res_bc_boot[i, mycol] <- extract_tausq(fit_bc_boot)
+          res_mln_naive[i, mycol] <- extract_tausq(fit_mln_naive)
+          res_mln_boot[i, mycol] <- extract_tausq(fit_mln_boot)
+          
+          res_qe_naive[i, 'I2'] <- fit_qe_naive$I2
+          res_qe_boot[i, 'I2'] <- fit_qe_boot$I2
+          res_bc_naive[i, 'I2'] <- fit_bc_naive$I2
+          res_bc_boot[i, 'I2'] <- fit_bc_boot$I2
+          res_mln_naive[i, 'I2'] <- fit_mln_naive$I2
+          res_mln_boot[i, 'I2'] <- fit_mln_boot$I2
+        } else {
+          res_qe_naive[i, mycol] <- res_qe_boot[i, mycol] <- res_bc_naive[i, mycol] <- 
+            res_bc_boot[i, mycol] <- res_mln_naive[i, mycol] <- res_mln_boot[i, mycol] <- 0
+          
+          res_qe_naive[i, 'I2'] <- res_qe_boot[i, 'I2'] <- res_bc_naive[i, 'I2'] <- 
+            res_bc_boot[i, 'I2'] <- res_mln_naive[i, 'I2'] <- res_mln_boot[i, 'I2'] <- 0
+        }
       }
       batchres <- list(res_qe_naive = res_qe_naive, res_qe_boot = res_qe_boot, 
                        res_bc_naive = res_bc_naive, res_bc_boot = res_bc_boot, 

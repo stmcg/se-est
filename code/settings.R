@@ -44,7 +44,7 @@ all_par2_ma <- 0.25
 all_n_studies_ma <- c(9, 30)
 all_scenarios_ma <- c('S1', 'S2', 'S3')
 all_prop_medians <- c(0, 1/3, 2/3, 1)
-all_tausq_ma <- 6
+all_tausq_ma <- c(6, 0)
 all_batches_ma <- 1:40
 batchsize_ma <- 25
 
@@ -52,20 +52,22 @@ batchsize_ma <- 25
 sim_scenarios_ma <- as.data.frame(matrix(NA, ncol = 7))
 colnames(sim_scenarios_ma) <- c('dist', 'par1', 'par2', 'n_studies', 'scenario', 'tausq', 'prop_medians')
 i <- 1
-for (scenario in all_scenarios_ma){
-  for (prop_medians in all_prop_medians){
-    for (n_studies in all_n_studies_ma){
-      if (!((prop_medians == 0) & (scenario %in% c('S2', 'S3')))){
-        sim_scenarios_ma[i, 'dist'] <- all_dist_ma
-        sim_scenarios_ma[i, 'par1'] <- all_par1_ma
-        sim_scenarios_ma[i, 'par2'] <- all_par2_ma
-        sim_scenarios_ma[i, 'tausq'] <- all_tausq_ma
-        
-        sim_scenarios_ma[i, 'n_studies'] <- n_studies
-        sim_scenarios_ma[i, 'scenario'] <- scenario 
-        sim_scenarios_ma[i, 'prop_medians'] <- prop_medians 
+for (tausq in all_tausq_ma){
+  for (scenario in all_scenarios_ma){
+    for (prop_medians in all_prop_medians){
+      for (n_studies in all_n_studies_ma){
+        if (!((prop_medians == 0) & (scenario %in% c('S2', 'S3')))){
+          sim_scenarios_ma[i, 'dist'] <- all_dist_ma
+          sim_scenarios_ma[i, 'par1'] <- all_par1_ma
+          sim_scenarios_ma[i, 'par2'] <- all_par2_ma
+          sim_scenarios_ma[i, 'tausq'] <- tausq
+          
+          sim_scenarios_ma[i, 'n_studies'] <- n_studies
+          sim_scenarios_ma[i, 'scenario'] <- scenario 
+          sim_scenarios_ma[i, 'prop_medians'] <- prop_medians 
+        }
+        i <- i + 1
       }
-      i <- i + 1
     }
   }
 }

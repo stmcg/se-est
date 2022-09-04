@@ -13,7 +13,7 @@ registerDoParallel(cores=10)
 
 set.seed(1)
 seeds <- sample.int(2^30, size = 10)
-res <- foreach(m = 1:(M / 2)) %dopar% {
+res <- foreach(m = 1:(M / 4)) %dopar% {
   set.seed(seeds[m])
   rowind <- m * 2 - 1
   dist <- sim_scenarios_ma[rowind, 'dist']
@@ -45,6 +45,7 @@ res <- foreach(m = 1:(M / 2)) %dopar% {
 }
 
 res <- rbindlist(res)
-res_table <- res[rep(1:10, each = 2),]
+res_table <- rbind(res[rep(1:10, each = 2),], 
+                   data.table(qe = rep(0, times = 20), bc = rep(0, times = 20), mln = rep(0, times = 20)))
 
 save(res_table, file = '../results/true_I2.RData')
